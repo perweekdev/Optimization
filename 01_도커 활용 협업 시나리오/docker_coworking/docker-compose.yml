@@ -1,0 +1,18 @@
+services:
+  trainer:
+    image: perweekdev/mission15-trainer:v2  # v1 → v2 변경
+    volumes:
+      - shared_artifacts:/artifacts
+
+  notebook:
+    build: ./researcher2
+    ports:
+      - "8888:8888"
+    volumes:
+      - shared_artifacts:/artifacts
+      - ./researcher2:/work  # inference.ipynb 편집/저장 편의용
+    depends_on:
+      - trainer
+
+volumes:
+  shared_artifacts:

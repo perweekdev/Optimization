@@ -1,0 +1,7 @@
+{
+  "num_features": 4,
+  "cat_features": 1,
+  "cv_rmse": 2.0424091238805238,
+  "train_rmse": 2.0406627733735485,
+  "preprocessing": "ColumnTransformer(StandardScaler + OneHotEncoder)"
+}
