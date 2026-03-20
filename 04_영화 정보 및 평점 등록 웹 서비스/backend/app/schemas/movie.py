@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 
 class MovieBase(BaseModel):
     title: str
-    release_date: Optional[str] = None
+    release_date: Optional[date] = None
     director: Optional[str] = None
     genre: Optional[str] = None
     poster_url: Optional[str] = None
