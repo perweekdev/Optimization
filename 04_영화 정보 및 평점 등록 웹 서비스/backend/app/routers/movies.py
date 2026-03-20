@@ -10,7 +10,7 @@ from app.core.config import settings
 from app.models.movie import Movie
 from app.schemas.movie import MovieCreate, MovieResponse
 from app.crud.movies import create_movie, get_movies, get_movie, delete_movie
-from app.services.tmdb import initialize_movies_tmdb
+from app.services.tmdb import initialize_movies_from_tmdb
 
 router = APIRouter(prefix="/movies", tags=["movies"])
 
@@ -43,5 +43,5 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 @router.post("/initialize")
 async def initialize_movies():
     """TMDB에서 최신 인기 영화 20개 자동 수집"""
-    result = await initialize_movies_tmdb()
+    result = await initialize_movies_from_tmdb()
     return result
