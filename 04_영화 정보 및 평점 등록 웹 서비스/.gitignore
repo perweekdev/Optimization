@@ -3,3 +3,5 @@
 
 *.md
 !readme.md
+
+__pycache__
