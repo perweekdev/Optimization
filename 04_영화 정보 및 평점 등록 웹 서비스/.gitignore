@@ -3,5 +3,6 @@
 
 *.md
 !readme.md
+!test_checklist.md
 
 __pycache__
