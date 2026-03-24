@@ -194,6 +194,8 @@ Bearer eyJhbGciOiJIUzI1NiIs...
 8. `GET /reviews/latest`  
 9. `GET /reviews/movie/{movie_id}`  
 
+\*`test_checklist.md` 파일을 참조하여 테스트를 진행하세요.
+
 </br>
 
 ### 테스트용 예시 데이터
