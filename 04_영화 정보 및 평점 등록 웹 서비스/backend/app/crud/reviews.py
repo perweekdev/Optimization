@@ -49,3 +49,7 @@ async def get_review_by_id(db: AsyncSession, review_id: int) -> Optional[Review]
 async def delete_review(db: AsyncSession, review: Review) -> None:
     await db.delete(review)
     await db.commit()
+
+async def get_reviews_by_user_id(db, user_id: int):
+    result = await db.execute(select(Review).where(Review.user_id == user_id))
+    return result.scalars().all()

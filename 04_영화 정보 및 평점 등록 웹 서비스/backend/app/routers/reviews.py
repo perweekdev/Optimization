@@ -105,3 +105,33 @@ async def delete_review_endpoint(
     await delete_review(db, review)
 
     return {"message": "Review deleted successfully"}
+
+@router.get("/me", response_model=List[ReviewListResponse])
+async def get_my_reviews_endpoint(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """내가 작성한 리뷰 조회"""
+    result = await db.execute(
+        select(Review).where(Review.user_id == current_user.id)
+    )
+    reviews = result.scalars().all()
+
+    review_list = []
+    for review in reviews:
+        movie_result = await db.execute(select(Movie).where(Movie.id == review.movie_id))
+        movie = movie_result.scalar_one_or_none()
+
+        review_list.append(
+            ReviewListResponse(
+                id=review.id,
+                movie_id=review.movie_id,
+                user_id=review.user_id,
+                content=review.content,
+                created_at=review.created_at,
+                movie_title=movie.title if movie else "미상",
+                username=current_user.username,
+            )
+        )
+
+    return review_list
