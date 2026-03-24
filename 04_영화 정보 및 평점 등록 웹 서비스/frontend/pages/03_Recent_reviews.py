@@ -1,5 +1,5 @@
 """
-03_Recent_reviews.py - 최근 리뷰 목록
+03_Recent_Reviews.py - 최근 리뷰 목록
 최근 10개 리뷰 조회 + 본인 리뷰 삭제
 """
 
