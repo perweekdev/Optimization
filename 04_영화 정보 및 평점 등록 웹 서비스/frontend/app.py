@@ -72,6 +72,25 @@ def register_dialog():
         st.rerun()
 
 
+# ===== 마이 프로필 모달 =====
+@st.dialog("👤 My Profile", width="medium")
+def my_profile_dialog():
+    headers = {"Authorization": f"Bearer {st.session_state.token}"}
+    response = requests.get(f"{API_URL}/auth/me", headers=headers)
+
+    if response.status_code == 200:
+        user_info = response.json()
+        st.markdown("### 내 정보")
+        st.write(f"**Username**: {user_info.get('username', '-')}")
+        st.write(f"**Email**: {user_info.get('email', '-')}")
+        st.write(f"**User ID**: {user_info.get('user_id', '-')}")
+    else:
+        st.error("프로필 정보를 불러오지 못했습니다.")
+
+    if st.button("닫기", use_container_width=True):
+        st.rerun()
+
+
 # ===== 메인 앱 =====
 st.title("🎬 Movie Review Service")
 st.markdown("---")
@@ -79,27 +98,29 @@ st.markdown("---")
 
 # 로그인 상태 표시
 if st.session_state.token:
-    col1, col2, col3 = st.columns([3, 1, 1])
-    with col1:
-        st.success(f"👋 환영합니다, **{st.session_state.username}**님!")
-    with col2:
-        st.info(f"USER_ID: {st.session_state.user_id}")
-    with col3:
-        if st.button("🚪 로그아웃", use_container_width=True):
+    st.markdown(f"## {st.session_state.username} 님, 환영합니다!")
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    ### 서비스 이용 안내
+    사이드바에서 아래 페이지들을 이용해보세요.
+    - **Movies**: 최신 영화 조회, 리뷰 보기 및 작성
+    - **My Reviews**: 내 리뷰 관리
+    - **Recent Reviews**: 최근 리뷰 확인
+    """)
+
+    action_col1, action_col2, action_spacer = st.columns([0.6, 0.6, 6])
+
+    with action_col1:
+        if st.button("My Profile"):
+            my_profile_dialog()
+
+    with action_col2:
+        if st.button("Logout"):
             for key in ["token", "user_id", "username"]:
                 if key in st.session_state:
                     del st.session_state[key]
             st.success("로그아웃 완료!")
             st.rerun()
-
-    st.markdown("---")
-    st.markdown("""
-    ### 🎯 사용 가능한 메뉴
-    사이드바에서 아래 페이지들을 이용해보세요:
-    - **Movies**: 인기 영화 + 리뷰 보기/작성
-    - **My Reviews**: 내 리뷰 관리
-    - **Recent Reviews**: 최근 리뷰 확인
-    """)
 
 else:
     st.markdown("## 🔐 로그인")
