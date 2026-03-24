@@ -1,13 +1,15 @@
 """
 01_Movies.py - 영화 목록 + 리뷰 기능
-포스터 크기 통일 + 작은 리뷰작성 버튼 + 리뷰작성 모달
+포스터 크기 통일 + 리뷰 보기 모달(리뷰 목록 조회 + 리뷰 작성)
 """
 
 import streamlit as st
 import requests
 
+
 # API URL
 API_URL = "http://localhost:8000"
+
 
 # 스타일
 st.markdown(
@@ -69,6 +71,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
 # ===== 최근 리뷰 모달 =====
 @st.dialog("🔥 최근 리뷰 (최대 10개)", width="large")
 def recent_reviews_dialog():
@@ -82,12 +85,12 @@ def recent_reviews_dialog():
         if reviews:
             for review in reviews:
                 preview = review["content"][:60] + "..." if len(review["content"]) > 60 else review["content"]
-                with st.expander(f"🎥 {review.get('movie_title', '미상')} - {preview}"):
+                with st.expander(f"{review.get('movie_title', '미상')} - {preview}"):
                     st.markdown(f"**{review['content']}**")
-                    st.caption(f"👤 {review.get('username', '알수없음')} | 📅 {review['created_at'][:10]}")
+                    st.caption(f"{review.get('username', '알수없음')} | {review['created_at'][:10]}")
 
                     if review.get("user_id") == st.session_state.user_id:
-                        if st.button("🗑️ 삭제", key=f"modal_delete_{review['id']}"):
+                        if st.button("삭제", key=f"modal_delete_{review['id']}"):
                             delete_response = requests.delete(
                                 f"{API_URL}/reviews/{review['id']}",
                                 headers=headers
@@ -106,30 +109,65 @@ def recent_reviews_dialog():
         st.rerun()
 
 
-# ===== 리뷰 작성 모달 =====
-@st.dialog("📝 리뷰 작성", width="large")
-def write_review_dialog(movie_id: int, movie_title: str):
-    st.markdown(f"### {movie_title}")
-    st.caption("이 영화에 대한 리뷰를 작성하세요.")
+# ===== 영화별 리뷰 보기 모달 =====
+@st.dialog("💬 영화 리뷰", width="large")
+def movie_reviews_dialog(movie_id: int, movie_title: str):
+    headers = {"Authorization": f"Bearer {st.session_state.token}"}
 
+    st.markdown(f"### {movie_title}")
+    st.caption("이 영화의 리뷰를 확인하고 직접 작성할 수 있습니다.")
+
+    reviews_response = requests.get(f"{API_URL}/reviews/movie/{movie_id}", headers=headers)
+
+    if reviews_response.status_code == 200:
+        reviews = reviews_response.json()
+
+        st.markdown("#### 리뷰 목록")
+        if reviews:
+            for review in reviews:
+                with st.container():
+                    st.markdown(f"**{review['content']}**")
+                    st.caption(
+                        f"{review.get('username', '알수없음')} | {review['created_at'][:10]}"
+                    )
+
+                    if review.get("user_id") == st.session_state.user_id:
+                        if st.button("삭제", key=f"delete_movie_review_{movie_id}_{review['id']}"):
+                            delete_response = requests.delete(
+                                f"{API_URL}/reviews/{review['id']}",
+                                headers=headers
+                            )
+                            if delete_response.status_code == 200:
+                                st.success("✅ 리뷰 삭제 완료!")
+                                st.rerun()
+                            else:
+                                st.error("❌ 삭제 실패")
+
+                    st.divider()
+        else:
+            st.info("아직 작성된 리뷰가 없습니다.")
+    else:
+        st.error(f"리뷰 조회 실패: {reviews_response.status_code}")
+
+    st.markdown("#### 리뷰 작성")
     content = st.text_area(
-        "리뷰 내용",
+        "내용",
         placeholder="리뷰를 작성해주세요",
-        height=180
+        height=120,
+        key=f"review_input_{movie_id}"
     )
 
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("취소", use_container_width=True, key=f"cancel_review_{movie_id}"):
+        if st.button("닫기", use_container_width=True, key=f"close_movie_reviews_dialog_{movie_id}"):
             st.rerun()
 
     with col2:
-        if st.button("리뷰 작성", use_container_width=True, key=f"submit_review_{movie_id}", type="primary"):
+        if st.button("등록", use_container_width=True, type="primary", key=f"submit_movie_review_{movie_id}"):
             if not content.strip():
                 st.warning("리뷰 내용을 입력하세요.")
             else:
-                headers = {"Authorization": f"Bearer {st.session_state.token}"}
                 review_data = {
                     "movie_id": movie_id,
                     "content": content
@@ -147,24 +185,23 @@ def write_review_dialog(movie_id: int, movie_title: str):
                         detail = response.json().get("detail", "Unknown error")
                     except Exception:
                         detail = response.text
-                    st.error(f"리뷰 작성 실패: {detail}")
-
 
 # ===== 메인 페이지 =====
-st.header("📺 인기 영화")
+st.header("📺 New movie")
 st.markdown("---")
 
 if not st.session_state.get("token"):
-    st.warning("⚠️ 로그인 후 리뷰 기능을 사용하세요.")
+    st.warning("⚠️ 로그인 후 최신 영화 리뷰를 확인하세요.")
     st.stop()
 
 headers = {"Authorization": f"Bearer {st.session_state.token}"}
 
-# 상단 버튼
-col1, col2, col3 = st.columns([1, 1, 1])
 
-with col1:
-    if st.button("영화 초기화 🔄", use_container_width=True):
+# 상단 버튼
+top_btn1, top_btn2, top_spacer = st.columns([0.8, 0.8, 6])
+
+with top_btn1:
+    if st.button("Load Movies 🔄"):
         response = requests.post(f"{API_URL}/movies/initialize", headers=headers)
         if response.status_code == 200:
             st.success("✅ 영화 초기화 완료!")
@@ -172,11 +209,8 @@ with col1:
         else:
             st.error(f"❌ 초기화 실패: {response.status_code}")
 
-with col2:
-    st.empty()
-
-with col3:
-    if st.button("최근 리뷰 👀", use_container_width=True):
+with top_btn2:
+    if st.button("Recent Reviews 👀"):
         recent_reviews_dialog()
 
 # 영화 목록
@@ -189,6 +223,7 @@ movies = movies_response.json()
 if not movies:
     st.info("아직 영화가 없습니다. '영화 초기화' 버튼을 클릭하세요.")
     st.stop()
+
 
 # 영화 그리드 (4열)
 for i, movie in enumerate(movies):
@@ -226,7 +261,7 @@ for i, movie in enumerate(movies):
         # 출시일 아래에 작은 버튼 배치
         btn_left, btn_mid, btn_right = st.columns([1.8, 1.2, 1.0])
         with btn_left:
-            if st.button("리뷰 작성", key=f"open_review_dialog_{movie['id']}"):
-                write_review_dialog(movie["id"], movie["title"])
+            if st.button("영화 리뷰", key=f"open_review_dialog_{movie['id']}"):
+                movie_reviews_dialog(movie["id"], movie["title"])
 
         st.markdown("<div class='movie-bottom-gap'></div>", unsafe_allow_html=True)
