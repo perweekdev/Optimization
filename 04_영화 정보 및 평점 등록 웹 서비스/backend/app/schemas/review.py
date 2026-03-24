@@ -16,3 +16,14 @@ class ReviewResponse(ReviewBase):
     
     class Config:
         from_attributes = True
+
+class ReviewListResponse(ReviewBase):
+    id: int
+    movie_id: int
+    user_id: int
+    created_at: datetime
+    movie_title: str
+    username: str
+
+    class Config:
+        from_attributes = True

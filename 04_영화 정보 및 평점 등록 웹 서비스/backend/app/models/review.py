@@ -1,7 +1,9 @@
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 from app.database import Base
+
 
 class Review(Base):
     __tablename__ = "reviews"
@@ -11,3 +13,6 @@ class Review(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    movie = relationship("Movie")
+    user = relationship("User")
